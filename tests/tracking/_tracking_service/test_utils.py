@@ -17,6 +17,7 @@ from mlflow.tracking._tracking_service.utils import (
     _TRACKING_PASSWORD_ENV_VAR,
     _TRACKING_TOKEN_ENV_VAR,
     _TRACKING_URI_ENV_VAR,
+    _ARTIFACT_ROOT_ENV_VAR ,
     _TRACKING_USERNAME_ENV_VAR,
 )
 
@@ -133,6 +134,25 @@ def test_get_store_sqlalchemy_store(tmp_wkdir, db_type):
         assert isinstance(store, SqlAlchemyStore)
         assert store.db_uri == uri
         assert store.artifact_root_uri == "./mlruns"
+
+    mock_create_engine.assert_called_once_with(uri, pool_pre_ping=True)
+
+
+def test_get_store_sqlalchemy_store_with_artifact_root():
+    patch_create_engine = mock.patch("sqlalchemy.create_engine")
+    uri = "sqlite://db.sqlite"
+    artifact_root = "some/path"
+    env = {
+        _TRACKING_URI_ENV_VAR: uri,
+        _ARTIFACT_ROOT_ENV_VAR: artifact_root,
+    }
+    with mock.patch.dict(os.environ, env), patch_create_engine as mock_create_engine, mock.patch(
+        "mlflow.store.db.utils._verify_schema"
+    ), mock.patch("mlflow.store.db.utils._initialize_tables"):
+        store = _get_store()
+        assert isinstance(store, SqlAlchemyStore)
+        assert store.db_uri == uri
+        assert store.artifact_root_uri == "artifact_uri"
 
     mock_create_engine.assert_called_once_with(uri, pool_pre_ping=True)
 
