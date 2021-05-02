@@ -4,7 +4,7 @@ import os
 import pytest
 
 import mlflow
-from mlflow.store.db.db_types import DATABASE_ENGINES
+from mlflow.store.db.db_types import DATABASE_ENGINES, SQLITE
 from mlflow.store.tracking.file_store import FileStore
 from mlflow.store.tracking.rest_store import RestStore
 from mlflow.store.tracking.sqlalchemy_store import SqlAlchemyStore
@@ -146,8 +146,8 @@ def test_get_store_sqlalchemy_store(tmp_wkdir, db_type):
 
 def test_get_store_sqlalchemy_store_with_artifact_root():
     patch_create_engine = mock.patch("sqlalchemy.create_engine")
-    uri = "sqlite://db.sqlite"
-    artifact_root = "some/path"
+    uri = "{}://hostname/database".format(SQLITE)
+    artifact_root = "file:artifact/path"
     env = {
         _TRACKING_URI_ENV_VAR: uri,
         _ARTIFACT_ROOT_ENV_VAR: artifact_root,
@@ -158,7 +158,7 @@ def test_get_store_sqlalchemy_store_with_artifact_root():
         store = _get_store()
         assert isinstance(store, SqlAlchemyStore)
         assert store.db_uri == uri
-        assert store.artifact_root_uri == "artifact_uri"
+        assert store.artifact_root_uri == artifact_root
 
     mock_create_engine.assert_called_once_with(uri, pool_pre_ping=True)
 
